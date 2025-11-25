@@ -158,3 +158,30 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+
+  docker_scout:
+    needs: build_test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for Scout
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: autopartss-scout:pr
+
+      - name: Docker Scout CVE Scan
+        uses: docker/scout-action@v1
+        with:
+          image: autopartss-scout:pr
+          command: cves
+          only-severity: critical
+          exit-code: '1'
