@@ -45,6 +45,30 @@ jobs:
           file: ./Dockerfile
           push: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/autopartss:${{ github.sha }}
+    sonarcloud:
+        needs: build_test
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+
+        steps:
+            - uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+
+            - name: Set up Java (SonarCloud necesita Java)
+                uses: actions/setup-java@v4
+                with:
+                    distribution: 'temurin'
+                    java-version: '17'
+
+            - name: SonarCloud Scan
+        # Acción oficial de SonarCloud
+                uses: SonarSource/sonarcloud-github-action@v2
+                env:
+                SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                SONAR_ORG: ${{ secrets.SONAR_ORG }}
+                SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      
 
   push_image:
     needs: build_test
